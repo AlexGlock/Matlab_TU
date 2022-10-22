@@ -1,0 +1,17 @@
+%% Aufgabe H1.3 b)
+% bestimmen der Maschinengenauigkeit von Matlab
+
+b = 2;                  % basis des dualen Zahlensystems
+p = -1;                 % start exponent (-1)
+m = 1;                  % mantisse ist statisch 1 
+
+z=
+
+while z~=0
+    p=p-1;
+    z=m*b^p;
+end
+z                        % kleinste darstellbare Zahl ~= 0
+
+
+ 
