@@ -44,8 +44,8 @@ grid on
 
 clearvars
 hmax = 0.1;                 % maximale Zeitschrittweite
-hmin = 0.0001;              % minimale Zeitschrittweite
-hh = flip(hmin:hmin:hmax);  % Zeitschwrittgrößen von hmax bis 0.0001
+hmin = 0.001;              % minimale Zeitschrittweite
+hh = flip(hmin:hmin*5:hmax);  % Zeitschwrittgrößen von hmax bis 0.0001
 
 cc = 0;                     % norm fehlervektor initialisieren
 
@@ -62,11 +62,11 @@ for h = hh(2:end)
     y0=[1; 0];      % Reset der Startwerte/ Vektoren
     yy = y0; y=y0;
     
-    % num. Approximation mit Heun
+    % num. Approximation mit imp. Euler
     for t=tt(2:end)
-        fun = @(y) [y+h*(f(t+h,y))]; % impliziter Euler
-        
-        yy = [yy,fsolve(fun, y0)];
+        fun = @(y1) [y-y1-h*(f(t+h,y1))]; % impliziter Euler
+        [y,fval]=fsolve(fun,y0);
+        yy = [yy,y];
     end
     % exakte Lösung ausgewertet am Zeitgitter
     yyex=yex(tt);
