@@ -1,15 +1,13 @@
 %% Aufgabe P1.1 - Gruppe 7 - Alexander Glock, Jannis Röder
 clearvars
-% Parameter
-N=1000;
-
-%t=logspace(0,3,3);
-%t
-%plot_partial_sums(N)
 
 
+% Parametervorgabe
+N = 1000000;
+plot_partial_sums(N)
 
-% vorwärtssumme
+
+% a) Vorwärtssumme - Fkt.
 function S = forward_sum(N)
 
     kk=(1:1:N);
@@ -19,8 +17,9 @@ function S = forward_sum(N)
     end
 end
 
-% rückwärtssumme
+% b) Rückwärtssumme - Fkt.
 function S = backward_sum(N)
+
     kk=flip(1:1:N);
     S=0;
     for k = kk(1:end)
@@ -28,37 +27,35 @@ function S = backward_sum(N)
     end
 end
 
-% plot fkt.
+% c) Abweichungsplot - Fkt.
 function plot_partial_sums(N)
     % check ob N definiert, sonst 2000000
     if not(exist('N','var'))N=2000000; end
+    % erzeuge logspace vektor mit 200 GANZEN Zahlen zwischen 1 und N 
+    n_log=round(logspace(log10(1),log10(N),200));
 
-    nn = (1:1:N);
-    % analytische Lösung ist die zeta 3 funktion
+    % exakte Lösung der Reihenkonvergenz ist die zeta 3 funktion
     S_inf = zeta(3);
+    % Initialisierung der Ergebnisvektoren auf 0
     En_up=0;
     En_down=0;
 
-    for n = nn(1:end)
+    for n = n_log
         % berechnen der Partialsummen
         S_up = forward_sum(n);
         S_down = backward_sum(n);
     
-        % Berechnen der Fehler & anhängen an vektor
+        % Berechnen der Abweichungen & anhängen an Ergebnisvektor
         En_up = [En_up,abs(S_inf-S_up)];
         En_down = [En_down,abs(S_inf-S_down)];
     end
 
-    % Konvergenz plot
-
-    %En_up_log=En_up(logspace(1,N,200))
-    %En_down_log=En_down(logspace(1,N,200))
-    %nn_log=nn(logspace(1,N,200))
-    loglog(nn,En_up(2:end),nn,En_down(2:end))
-    title('Konvergenzverhalten der Partialsummen')
-    legend('Vorwärtssumme','Rückwärtssumme')
+    % loglog Plot, ab zweitem Wert weil Wert1 = 0
+    loglog(n_log,En_up(2:end),n_log,En_down(2:end))
+    title('Abweichung der Partialsummen')
+    legend('Vorwärtssummenfehler E_n \uparrow','Rückwärtssummenfehler E_n \downarrow')
     xlabel('N')
-    ylabel('|S-S_n|')
+    ylabel('|S_\infty-S_n|')
     grid on
 end
 
