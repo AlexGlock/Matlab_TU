@@ -1,11 +1,21 @@
 %% Aufgabe P1.1 - Gruppe 7 - Alexander Glock, Jannis Röder
+% Die exakte Lösung der Reihe wird symbolisch berechnet (Z.49)
+% Zu diesem Zweck wird die Matlab symbolic Toolbox in diesem Skritp
+% benutzt.
+
 clearvars
 
-
 % Parametervorgabe
-N = 1000000;
+N = 2000000;
 plot_partial_sums(N)
 
+% d) Versuchserkentnisse:
+%   Die Summationsrichtung spielt zunächst keine Rolle (kommutativ).
+%   Ab ~n=210000 konvergiert der Vorwärtssummenfehler nicht weiter.  
+%   - Die Vorwärtssumme beginnt mit der größten Zahl(=1). Inkrement wird zunehmend kleiner
+%   => Maschinengenauigkeit wird erreicht, es wird nichts mehr addiert
+%   - Die Rückwärtssumme beginnt mit der kleinsten Zahl. Inkrement wächst nurnoch
+%   => günstiger für begrenzten Stellengenauigkeit von double
 
 % a) Vorwärtssumme - Fkt.
 function S = forward_sum(N)
@@ -35,7 +45,9 @@ function plot_partial_sums(N)
     n_log=round(logspace(log10(1),log10(N),200));
 
     % exakte Lösung der Reihenkonvergenz ist die zeta 3 funktion
-    S_inf = zeta(3);
+    %S_inf = zeta(3);
+    syms k
+    S_inf=symsum(1/k^3,k,1,Inf);
     % Initialisierung der Ergebnisvektoren auf 0
     En_up=0;
     En_down=0;
