@@ -12,7 +12,7 @@ yex = @(t) [cos(pi*t); -pi*sin(pi*t)];
 y0=[1; 0];
 t0=0;
 T=1;
-%n=30; n Vorgabe durch for loop
+%n=30; Vorgabe durch for loop
 
 hmax = 0.1; % maaximale Zeitschrittweite
 hmin = 0.001; % minimale Zeitschrittweite
@@ -63,7 +63,7 @@ function [t,yy] = myRK(y0,f,t0,T,n,A,b,g)
 
     % strikte Dreiecksmatrix?
     if istril(A) & (norm(diag(A))==0)
-        % -- bei explizitem Verfahren -- FUNKTIONIERT %
+        % -- bei explizitem Verfahren -- %
         for ti=t(2:end)
             S_bk=zeros(1,size(y0,1)).';
             KK = f(ti,y);                  % Liste mit allen k [k_1, k_2, ...]
@@ -85,14 +85,13 @@ function [t,yy] = myRK(y0,f,t0,T,n,A,b,g)
 
     else % implizite RKV
 
-        % -- Matrix ist diagonal implizit -- FUNKTIONIERT%
+        % -- Matrix ist diagonal implizit -- %
         if istril(A) 
             for ti=t(2:end)
                 S_bk=zeros(1,size(y0,1)).';
                 % K = Liste mit allen k [k_1, k_2, ...]
-                fun= @(sk) [sk-f(ti+g(1)*h,y+h*A(1,1)*sk)];
-                [kval, ~]=fsolve(fun,y0);
-                KK = kval;
+                fun= @(sk) [ks-f(ti+g(1)*h,sk)]
+                KK = f(ti+g(1)*h,y);
                 % k's höherer Stufe berechnen:
                 for j=ss(2:end)
                     S_ak=zeros(1,size(y0,1)).';
@@ -115,7 +114,7 @@ function [t,yy] = myRK(y0,f,t0,T,n,A,b,g)
                 yy = [yy,y];
             end 
 
-        % -- Matrix hat keine besondere symmetrie/aufbau -- FUNKTIONIERT NICHT %  
+        % -- Matrix hat keine besondere symmetrie/aufbau -- %  
         else 
             % s dimensionales vektorsymbol k = [k1 k2 ... ks]
             sym('Ks',[1 s])
