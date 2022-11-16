@@ -2,9 +2,9 @@
 clearvars
 
 % Eingabeparam
-A = [1/2 0; 1/2 0] %[1/2 -1/2; 1/2 1/2] % [0 0 0 0; 1/3 0 0 0; -1/3 1 0 0; 1 -1 1 0] 
-b = [1/2 1/2] % [1/2 1/2] % [1/8 3/8 3/8 1/8] 
-g = [0 1] % [0 1] % [0 1/3 2/3 1] 
+A =[0 0 0 0; 1/3 0 0 0; -1/3 1 0 0; 1 -1 1 0] %[1/2 -1/2; 1/2 1/2] % [1/2 0; 1/2 0] %  
+b =[1/8 3/8 3/8 1/8] %[1/2 1/2] % [1/2 1/2] %  
+g =[0 1/3 2/3 1] %[0 1] % [0 1] %  
 
 % Problemdefinition
 f = @(t,y) [y(2); -pi^2*y(1)];
@@ -27,11 +27,19 @@ for h = hh(2:end)
     
     % num. Approximation mit RKV
     [tt,yy]=myRK(y0,f,t0,T,n,A,b,g);
-    % exakte Lösung ausgewertet am Zeitgitter
-    yyex=yex(tt);
-    % norm. Fehler der num. Approximation
-    c = norm((yyex(1,:)-yy(1,:)),'Inf');
-    cc = [cc,c];
+    if istril(A)
+        % exakte Lösung ausgewertet am Zeitgitter
+        yyex=yex(tt);
+        % norm. Fehler der num. Approximation
+        c = norm((yyex(1,:)-yy(1,:)),'Inf');
+        cc = [cc,c];
+    else
+        % exakte Lösung ausgewertet am Zeitgitter
+        yyex=yex(tt).';
+        % norm. Fehler der num. Approximation
+        c = norm((yyex(2,:)-yy(2,:)),'Inf');
+        cc = [cc,c];
+    end
 end
 
 % Konvergenz plot
@@ -63,6 +71,7 @@ function [t,yy] = myRK(y0,f,t0,T,n,A,b,g)
 
     % strikte Dreiecksmatrix?
     if istril(A) & (norm(diag(A))==0)
+
         % -- bei explizitem Verfahren -- FUNKTIONIERT %
         for ti=t(2:end)
             S_bk=zeros(1,size(y0,1)).';
@@ -84,9 +93,9 @@ function [t,yy] = myRK(y0,f,t0,T,n,A,b,g)
         end
 
     else % implizite RKV
-
         % -- Matrix ist diagonal implizit -- FUNKTIONIERT%
         if istril(A) 
+
             for ti=t(2:end)
                 S_bk=zeros(1,size(y0,1)).';
                 % K = Liste mit allen k [k_1, k_2, ...]
@@ -117,36 +126,54 @@ function [t,yy] = myRK(y0,f,t0,T,n,A,b,g)
 
         % -- Matrix hat keine besondere symmetrie/aufbau -- FUNKTIONIERT NICHT %  
         else 
-            % s dimensionales vektorsymbol k = [k1 k2 ... ks]
-            sym('Ks',[1 s])
-            sym('F',[1 s])
+            % Startwert kvec für ersten Zeitschritt
+            dimy=size(y0,1);
+            stuf=s;
+            b=b.';
+            g=g.';
+            n=round(n)
+            y=zeros(n+1,dimy);
+            y(1,:)=y0';
+            [yy,tt] = impRKV(y,f,t,h,n,A,b,g,dimy,stuf)
             
-            for ti=t(2:end)
-                S_bk=zeros(1,size(y0,1)).';
-                
-                for j=ss(2:end)
-                    S_aK=zeros(1,size(y0,1)).';
-                    for k=ss(1:j)   % Summe über alpha_k * k_k = S_ak
-                       S_aK= @(Ks) [y + h*(S_ak+A(j,k)*Ks(k))];
-                       if k==1
-                        F= @(Ks) [Ks(k)-f(ti+g(j)*h,y+h*S_aK(Ks))];
-                       else
-                        Fnew = @(Ks) [Ks(k)-f(ti+g(j)*h,y+h*S_aK(Ks))];
-                        F = @(Ks) {F,Fnew}
-                       end
-                    end
-                end
-                Ks0=zeros(1:s)
-                [KK, ~]=fsolve(F,Ks0)
-                for j=ss    % Summe über beta_j * k_j
-                    S_bk = S_bk+b(j)*KK(:,j);
-                end
-                %S_bk = symsum(b(l)*K(:,l),l,1,2)
-                y = y+h*S_bk;
-                yy = [yy,y];
-            end 
-       
         end
     end
 end
 
+function [y,t] = impRKV(y,f,t,h,n,A,b,g,dimy,stuf)
+
+    % Startwert kvec für ersten Zeitschritt
+    kstart = ones(dimy,stuf);
+
+    % Anwendung implizites RKV
+    for i = 1:1:n
+
+        % Grundlegende Parameter für Zeitschritt
+        ti  = t(i);
+        yi  = y(i,:)';
+
+        % Definition des zu lösenden Systems für den Zeitschritt
+        f_opt = @(kvec) F(kvec,dimy,stuf,ti,h,yi,A,g,f); 
+
+        % Lösen des Systems -> Lösung wird als Startwert für nächsten
+        % Zeitschritt verwendet
+        kvec = fsolve(f_opt,kstart); 
+        kstart = kvec;
+
+        % Berechne y an nächster Stützstelle
+        y(i+1,:) = (yi + h * kvec * b)';
+
+    end
+
+    
+    % Funktion zur Aufstellung des Gleichungssystems zum Verfahren
+    function minF = F(kvec,dimy,stuf,ti,h,yi,A,g,f)
+
+        minF = zeros(dimy,stuf);
+        for j=1:1:stuf
+            minF(:,j) = kvec(:,j) - f(ti + g(j,1) * h, yi + h * kvec * A(j,:)');
+        end
+
+    end
+
+end

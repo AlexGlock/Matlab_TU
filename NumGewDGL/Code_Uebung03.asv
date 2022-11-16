@@ -1,0 +1,129 @@
+% Problemdefinition
+y_1 = @(y) y(2);
+y_2 = @(y) -1.25*y(1)-3*y(2);
+f = @(t,y) [y_1(y); y_2(y)]; 
+y_0=[2; 4];
+
+
+% Eingabeparameter für Verfahren
+y0  = y_0;
+t0  = 0;
+T   = 10;
+n   = 1000;
+
+A = [0,0;0.5,0]; 
+g = [0;0.5]; 
+b = [0;1];
+
+
+% Erstellung t
+h = T/n;
+t = t0:h:T;
+
+% Erstellung yy
+dimy    = max(size(y0));
+y       = zeros(n+1,dimy);
+y(1,:)  = y0';
+
+
+% Ermittle Anzahl der Stufen des Verfahrens
+stuf = max(size(g));
+
+
+% for i = 1:1:n
+% 
+%     % Grundlegende Parameter für Zeitschritt
+%     ti  = t(i);
+%     yi  = y(i,:)';
+% 
+%     % Erstelle kvec
+%     kvec = zeros(dimy,stuf);
+%     for j=1:1:stuf
+%         kvec(:,j) = f(ti + g(j,1) * h, yi + h * kvec * A(j,:)');
+%     end
+%     
+%     % Berechne y an nächster Stützstelle
+%     y(i+1,:) = (yi + h * kvec * b)';
+%  
+% end
+
+
+% % Startwert kvec für ersten Zeitschritt
+% kstart = ones(dimy,stuf);
+% 
+% % Anwendung implizites RKV
+% for i = 1:1:n
+% 
+%     % Grundlegende Parameter für Zeitschritt
+%     ti  = t(i);
+%     yi  = y(i,:)';
+%     
+%     % Definition des zu lösenden Systems für den Zeitschritt
+%     f_opt = @(kvec) F(kvec,dimy,stuf,ti,h,yi,A,g,f); 
+%     
+%     % Lösen des Systems -> Lösung wird als Startwert für nächsten
+%     % Zeitschritt verwendet
+%     kvec = fsolve(f_opt,kstart); 
+%     kstart = kvec;
+%     
+%     % Berechne y an nächster Stützstelle
+%     y(i+1,:) = (yi + h * kvec * b)';
+%  
+% end
+
+
+[y,t] = impRKV(y,f,t,h,n,A,b,g,dimy,stuf);
+
+
+% Exakte Lösung
+yex = @(t) [9/2*exp(-1/2*t)-5/2*exp(-5/2*t); -9/4*exp(-1/2*t)+25/4*exp(-5/2*t)];
+yyex=yex(t);
+
+% Plotte Exakte (blau) und numerische (rot) Lösung
+plot(t,yyex(1,:),'b-',t,y(:,1),'r.')
+
+%--------------------------------------------------------------------------
+%--------------------------------------------------------------------------
+
+% Implizites RKV
+
+%--------------------------------------------------------------------------
+
+function [y,t] = impRKV(y,f,t,h,n,A,b,g,dimy,stuf)
+
+    % Startwert kvec für ersten Zeitschritt
+    kstart = ones(dimy,stuf);
+
+    % Anwendung implizites RKV
+    for i = 1:1:n
+
+        % Grundlegende Parameter für Zeitschritt
+        ti  = t(i);
+        yi  = y(i,:)';
+
+        % Definition des zu lösenden Systems für den Zeitschritt
+        f_opt = @(kvec) F(kvec,dimy,stuf,ti,h,yi,A,g,f); 
+
+        % Lösen des Systems -> Lösung wird als Startwert für nächsten
+        % Zeitschritt verwendet
+        kvec = fsolve(f_opt,kstart); 
+        kstart = kvec;
+
+        % Berechne y an nächster Stützstelle
+        y(i+1,:) = (yi + h * kvec * b)';
+
+    end
+
+    
+    % Funktion zur Aufstellung des Gleichungssystems zum Verfahren
+    function minF = F(kvec,dimy,stuf,ti,h,yi,A,g,f)
+        minF = zeros(dimy,stuf);
+        for j=1:1:stuf
+            minF(:,j) = kvec(:,j) - f(ti + g(j,1) * h, yi + h * kvec * A(j,:)');
+        end
+    end
+
+end
+
+%--------------------------------------------------------------------------
+%--------------------------------------------------------------------------
