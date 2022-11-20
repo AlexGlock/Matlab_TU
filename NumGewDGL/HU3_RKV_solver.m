@@ -1,6 +1,9 @@
 %% HU3 Aufgabe H4 - RKV
 clearvars
 
+% Code von Alexander Glock zur Aufgabe H4 in Uebung3
+% Plot liefert eine Näherung für die Konvergenzordnungen durch die Steigung der Abweichungsentwicklung 
+
 % Eingabeparam
 A =[0 0 0 0; 1/3 0 0 0; -1/3 1 0 0; 1 -1 1 0] %[1/2 -1/2; 1/2 1/2] % [1/2 0; 1/2 0] %  
 b =[1/8 3/8 3/8 1/8] %[1/2 1/2] % [1/2 1/2] %  
