@@ -3,26 +3,26 @@
 clearvars
 
 % Vorgabe der Matrix Dimension des AWP := (n_awp+1)x(n_awp+1)
-n_awp=30;
+n_awp=5;
 % Anfangswertproblem generieren: 
 % --> make_task1(n) = System aus Aufgabenteil (I)
 % --> make_task2(n) = System aus Aufgabenteil (II)
-[A_awp,y0,t0,T]=make_task2(n_awp); %make_task2(n)
+[A_awp,y0,t0,T]=make_task1(n_awp); %make_task2(n)
 
 % ODE der Form:
 f = @(t,y) (-1)*A_awp*y;
 
 % Verfahrensauswahl mit make_RK(sel):
 % sel: 1=Heun a)   2=Gauss-2 b)   3=imp. Trapez c) 
-[A,b,g]=make_RK(2);
+[A,b,g]=make_RK(3);
 
-% analytische LSG vorbereiten:
-[EV, D] = eig(-A_awp);  % Eigenvektoren              
-E=diag(D);              % Eigenwerte
-C= linsolve(EV,y0);     % Konstanten mittels y(0) Bed.
+%[yhom,t] = yhomogen(A_awp,y0,n_awp,t0,T,10)
+%[tt, yy] = myRK(y0,f,t0,T,10,A,b,g)
+%yhom(:,1)
+%plot(t,yhom)
 
 % experimentelle Ordnungsermittlung mit Plot:
-test = convPlot(y0,f,t0,T,A,b,g,EV,E,C);
+test = convPlot(y0,f,t0,T,A,b,g,A_awp,n_awp);
 
 % schriftliche Ergebnisse ganz unten 
 function [A_awp,y0,t0,T] = make_task1(n)
@@ -82,16 +82,22 @@ function [A,b,g] = make_RK(sel)
             g =[0 1]';
     end
 end
-function Y = Yex(C,E,EV,t)
-    Y=zeros(1,length(E))';
-    for k=(1:1:length(E))
-        Y_k= C(k)*EV(k)*exp(E(k)*t);
-        Y=Y+Y_k;
+function Y = Yex(E,vec,tt)
+    Y = zeros(length(E),length(tt));
+    for i=1:1:length(tt)
+        ti=tt(i);
+        Yi=zeros(1,length(E))';
+    
+        for val=(1:1:length(E))
+            Yi= Yi +vec(:,val)*exp(E(val)*ti);
+        end
     end
 end
-function test = convPlot(y0,f,t0,T,A,b,g,EV,E,C)
+function test = convPlot(y0,f,t0,T,A,b,g,A_awp,n_awp)
         h0=@(h) 1;
         h1=@(h) h;
+
+        Amat=(-1)*A_awp
       
         hmax = T/100;                    % maximale Zeitschrittweite
         hmin = T/10000;                  % minimale Zeitschrittweite
@@ -99,15 +105,16 @@ function test = convPlot(y0,f,t0,T,A,b,g,EV,E,C)
         cc = 0;                          % norm fehlervektor initialisieren
 
     for h=hh(2:end)
-        n=round(T/h);
+        n_t=round(T/h);
         % Approximation mit RKV
-        [tt, yy] = myRK(y0,f,t0,T,n,A,b,g);
+        [tt, yy] = myRK(y0,f,t0,T,n_t,A,b,g);
         % "exakte" Lösung des DGL Systems zu tt berechnen:
-        yyex=Yex(C,E,EV,tt);
+        [yhom, ~]=yhomogen(Amat,y0,n_awp,t0,T,n_t)
+
 
         % norm. Fehler des RKV
-        c = norm((yyex(1,:)-yy(1,:)),'Inf');
-        cc = [cc,c];
+        c = norm((yhom(1,:)-yy(:,1)),'Inf') % norm(yhom-yy,'Inf'); %
+        cc = [cc,c];%[cc,norm(yhom-yy)];%
     end
     
     % Konvergenz plot
@@ -119,6 +126,50 @@ function test = convPlot(y0,f,t0,T,A,b,g,EV,E,C)
     grid on
 
     test='fertig';
+end
+
+% Funktion zur Berechnung der analytischen, homogenen Lösung
+
+%--------------------------------------------------------------------------
+
+function [yhom,t] = yhomogen(Amat,y0,n,t0,T,n_t)
+
+    % Berechnung der Schrittweitte h
+    h = (T-t0)/n_t;
+
+    % Berechnung der Eigenwerte und -vektoren zu Amat
+    [eigvec,eigval] = eig(Amat);
+    
+    % Erstelle yhom leer und t 
+    t       = t0:h:T;
+    yhom    = zeros(n_t,n+1);
+    
+    % Führe Berechnung fort, solange geometrische Vielfalt 
+    % der Eigenvektoren passt
+    if det(eigvec) ~= 0
+        
+        % Bestimmung der Konstanten zur homogenen Lösung
+        cons = ones(1,n+1);
+        F = @(cons) (cons .*eigvec * ones(n+1,1) - y0);
+        cons = fsolve(F,cons,optimoptions('fsolve','Display','none'));
+    
+        % Multiplikation der Konstanten mit Eigenvektoren
+        vec_hom = cons.*eigvec;
+
+       % Berechne homogene Lösung
+        for i=1:1:n_t+1 
+
+            ti = t(1,i);
+            solvevec = zeros(n+1,1);
+            for val=1:1:n+1
+                solvevec = solvevec + vec_hom(:,val) * exp(eigval(val,val)*ti);
+            end
+            yhom(i,:) = solvevec';   
+
+        end
+    
+    end
+
 end
 
 %% Ergebnis:
