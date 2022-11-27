@@ -2,106 +2,120 @@
 % Code von Alexander Glock
 clearvars
 
+% Paramter
+t0=0;
+T=4*pi;                 % 2 Perioden = 4 pi
+y0=[1;0];               % 1 cos Lsg
+n_max=1000;             % ganzzahl größer 100
+
+% Verfahrensauswahl order: 3 oder 4 mit impl=true/false
+order = 4;
+impl= true;
+
 % AWP und Verfahren initialisieren
-[AWP, RK4, gaussII] = createSetting();
+[A,beta,gamma,msg]=select_RK(order,impl)
+[f, S] = create_DES();
 
-% DGL System aus Beispiel 6.1 definieren
-[M, mu] = create_DES();
+% erzeuge logspace vektor mit 200 GANZEN Zahlen zwischen 100 und n_max 
+n_log=round(logspace(log10(100),log10(n_max),50));
 
-% ============ ACHTUNG: ===================================================
-% Das implizite Verfahren brauch sehr lang zur Berechung der Lösung mit der
-% gewünschten Genauigkeit. In den Verfahrens-Structs ist jeweils die
-% benötigte Schrittzahl zum geforderten Fahler als .n Attribut hinterlegt
-% =========================================================================
-% RK4.n, gaussII.n oder beliebiger Ganzzahlenwert
-n=RK4.n %n=gaussII.n    %n=10000  
+% fehlerbestimmung + plot
+hh=0;
+error=0;
+n_end=n_log(end);
+for n=n_log(1:end)
+    if n==n_end
+        tic
+        [tt, yy]=myRK(y0,f,t0,T,n,A,beta,gamma);
+        time = toc
+    else
+        [tt, yy]=myRK(y0,f,t0,T,n,A,beta,gamma);
+    end
+    error=[error,norm(yy(:,1)-yy(:,end))];
+    hh=[hh,(T-t0)/n];
+end
+min_error = error(end)
+loglog(hh(2:end),error(2:end))
+title('Fehler in Abhänigkeit zur Gitterweite')
+xlabel('Gitterweite h')
+ylabel('Verfahrensfehler nach 2 Perioden')
+grid on
 
-% numerische Lösung mit Runge Kutta und dabei Zeit stoppen
-%  ----> entweder gaussII oder RK4 auswählen:
-tic
-%[tt,yy]=myRK(AWP.Y0,M,AWP.t0,AWP.Tper,n,gaussII.A,gaussII.beta,gaussII.gamma);
-[tt,yy]=myRK(AWP.Y0,M,AWP.t0,AWP.Tper,n,RK4.A,RK4.beta,RK4.gamma);
-time = toc
 
-% Plot der Lösung 
-plot(yy(3,:),yy(1,:))
-title('Satellitenlaufbahn innerhalb einer Periode')
-xlabel('X-Koordinate')
-ylabel('Y-Koordinate')
-
-% Fehler und Schrittweite der berechneten Lösung auf Konsole ausgeben
-h=(AWP.Tper-AWP.t0)/n
-error=norm(yy(:,1)-yy(:,end))
-
-% Energiebilanz der Lösung errechnen: E_end-E_anf
-% yy: [y, y', x, x']
-E_end = 1/2*(yy(4,end)^2+yy(2,end)^2)-1/2*(yy(3,end)^2+yy(1,end)^2)-(1-mu)/sqrt((yy(3,end)+mu)^2+(yy(1,end)))-mu/sqrt((yy(3,end)-(1-mu))^2+yy(1,end)^2);
-E_anf = 1/2*(yy(4,1)^2+yy(2,1)^2)-1/2*(yy(3,1)^2+yy(1,1)^2)-(1-mu)/sqrt((yy(3,1)+mu)^2+(yy(1,1)))-mu/sqrt((yy(3,1)-(1-mu))^2+yy(1,1)^2);
-E_diff = E_end-E_anf
-
-% Ergebnisse:
-% =========================================================================
-% Die Lösung des DGL-Systems mit dem expliziten RK4-Verfahren benötigt
-% ungefähr eine Schrittzahl (n) von 852000 und damit eine ungefähre
-% Schrittgröße von h ~ 2*10^(-5) um die geforderte Genauigkeit zu erreichen.
-% Die Lösung mittels des impliziten Gauss2-Verfahrens benötigt dagegen nur
-% rund 605000 Schritte um ein vergleichbares Ergebnis zu liefern. Damit
-% ergibt sich für dieses Verfahren eine konstante Schrittgröße von h ~
-% 2.8x10^-5
-% Das implizite Verfahren (Gauss2) benötigt trotz der geringeren
-% Schrittzahl erheblich länger (ungefähr 530 sec vs 15 sec) um die Lösung
-% zu berechnen, was auf die Lösung von impliziten Gleichungssytemen in jedem 
-% Zeitschritt zurück zu führen ist. 
+% Ergebnis:
+% Bei allen gegebenen Verfahren wird der kleinste Fehler bei der kleinsten
+% Gitterweite h erreicht. Bei der Verwendung von n_max=1000 ergeben sich
+% diese minimale Gitterweite zu ~ 10^(-2) und die dortigen Fehler:
+%   2.6*10^(-9)   RK4 - explizit, ordnung 4             0.0153 sec
+%   0.0387        Simpson - explizit, ordnung 3         0.0117 sec
+%   4.34*10^(-10) Gauss2 - implizit, ordnung 4          0.7091 sec
+%   3.4*10^(-7)   Radau-IA - implizit, ordnung 3        0.7056 sec
 %
-% Bei beiden Verfahren ist die Energiebilanz über die Zeit negativ. Die
-% Enegie des Systems wird also durch die Benutzung von diesen n
+% Die Zeiten wurden immer beim Durchlauf mit der kleinsten Gitterweite
+% und ohne Änderungen am myRK-solver gemessen (TolX,TolFun=1e-14).
+% Anschließend wurden die Paramter auf Tolx, TolFun = 1e-10 geändert.
+% Dadurch konnten für die impliziten verfahren folgende Ergebnisse erreicht
+% werden:
+%   4.6*10^(-10)  Gauss2 - implizit, ordnung 4          0.6698 sec
+%   3.5*10^(-7)   Radau-IA - implizit, ordnung 3        0.6222 sec
+% Bei einer Verschärfung der Toleranzen auf Tolx, TolFun 1e-18 hingegen:
+%   4.35*10^(-10)  Gauss2 - implizit, ordnung 4         0.7641 sec
+%   3.46*10^(-7)   Radau-IA - implizit, ordnung 3       0.7262 sec
+%
+% Fsolve ist ebenfalls ein iteratives Verfahren. Dieses Verfahren liefert
+% kein absolutes Ergebnis sondern eine qualitative Näherung als Lösung für
+% die nichtlinearen Gleichungssysteme bei impliziten RKV. Die Qualität
+% dieser Näherungen kann mit einer kleineren Fehlerschranke (Tolx, TolFun)
+% verbessert werden, allerdings steigt 
+
 
 %--------------------------------------------------------------------------
-%-- Differentialgleichungssystem  aus Beispiel 6.1 aufbauen ---------------
+%------------------ Differentialgleichungssystem  y'' = -y  ---------------
 
-function [M, mu] = create_DES()
+function [f, S] = create_DES()
     
-    syms x(t) y(t)
-    mu=0.012277471;
-    D_E = @(x, y) ((x+mu)^2+y^2)^(3/2);
-    D_M = @(x, y) ((x-(1-mu))^2+y^2)^(3/2);
-    de1 = diff(x,2) == x+2*diff(y)-(1-mu)*((x+mu)/D_E)-mu*((x-1+mu)/D_M);
-    de2 = diff(y,2) == y-2*diff(x)-(1-mu)*(y/D_E)-mu*(y/D_M);
-    des = [de1 de2];
-    [V, S]=odeToVectorField(des);
-    % Struktur von sym Y = [y; diff(y); x; diff(x)]
-    M = matlabFunction(V, 'vars', {'t','Y'});
+    syms y(t)
+    de = diff(y,2) == -y;
+    [V, S]=odeToVectorField(de);
+    % Struktur von sym Y = [y; diff(y)]
+    f = matlabFunction(V, 'vars', {'t','Y'});
 
 end
 
 %--------------------------------------------------------------------------
-%-------------------------  Verfahren und AWP definieren ------------------
+%-------------------------  Verfahren definieren --------------------------
 
-function [AWP, RK4, gaussII] = createSetting()
-
-    % AWP Definition
-    x0 = [0.994; 0];
-    y0 = [0; -2.00158510637908252240];
-    AWP.Y0 = [y0;x0];
-    AWP.t0 = 0;
-    AWP.Tper = 17.065216560157962;
+function [A,beta,gamma,msg]=select_RK(order,impl_true)
+    if order==4 && impl_true
+        %Gauss Two-Step - implizites Verf.
+        A = [[1/4,1/4 - sqrt(3)/6];[1/4 + sqrt(3)/6,1/4]];
+        beta = [1/2,1/2]';
+        gamma = [1/2-sqrt(3)/6,1/2 + sqrt(3)/6]';
+        msg = "selected gaussII order 4";
     
-    %Gauss Two-Step - implizites Verf.
-    gaussII.A = [[1/4,1/4 - sqrt(3)/6];[1/4 + sqrt(3)/6,1/4]];
-    gaussII.beta = [1/2,1/2]';
-    gaussII.gamma = [1/2-sqrt(3)/6,1/2 + sqrt(3)/6]';
-    gaussII.Order = 4;
-    gaussII.n = 605000;
-    gaussII.Name = "gaussII";
+    elseif order==3 && impl_true
+        %Radau-IA
+        A = [[1/4,-1/4];[1/4, 5/12]];
+        beta = [1/4,3/4]';
+        gamma = [0, 2/3]';
+        msg = "selected Radau-IA order 3";
     
-    %klassisches RK - explizites Verf.
-    RK4.A = [0 0 0 0; 1/2 0 0 0; 0 1/2 0 0; 0 0 1 0];
-    RK4.beta = [1/6,1/3,1/3,1/6]';
-    RK4.gamma = [0, 1/2, 1/2, 1]';
-    RK4.Order = 4;
-    RK4.n = 852000;
-    RK4.Name = "klassisches Runge-Kutta Verfahren";
-
+    elseif order==4 && not(impl_true)
+        %klassisches RK - explizites Verf.
+        A = [0 0 0 0; 1/2 0 0 0; 0 1/2 0 0; 0 0 1 0];
+        beta = [1/6,1/3,1/3,1/6]';
+        gamma = [0, 1/2, 1/2, 1]';
+        msg = "selected Runge-Kutta4 order 4";
+    
+    elseif order==3 && not(impl_true)
+        %Simpsonregel- explizites Verf.
+        A = [0 0 0 ; 1/2 0 0 ; -1 2 0];
+        beta = [1/4,0,3/4]';
+        gamma = [0, 1/2, 1]';
+        msg = "selected Simpson order 3";
+    else
+        error("unsupported order input (3 or 4)")
+    end
 end
 
 %--------------------------------------------------------------------------

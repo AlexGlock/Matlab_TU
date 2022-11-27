@@ -14,7 +14,7 @@ clearvars
 % benötigte Schrittzahl zum geforderten Fahler als .n Attribut hinterlegt
 % =========================================================================
 % RK4.n, gaussII.n oder beliebiger Ganzzahlenwert
-n=RK4.n %n=gaussII.n   
+n=RK4.n %n=gaussII.n    %n=10000  
 
 % numerische Lösung mit Runge Kutta und dabei Zeit stoppen
 %  ----> entweder gaussII oder RK4 auswählen:
@@ -33,11 +33,11 @@ ylabel('Y-Koordinate')
 h=(AWP.Tper-AWP.t0)/n
 error=norm(yy(:,1)-yy(:,end))
 
-% Energiebilanz der Lösung errechnen: E_anf-E_end
+% Energiebilanz der Lösung errechnen: E_end-E_anf
 % yy: [y, y', x, x']
 E_end = 1/2*(yy(4,end)^2+yy(2,end)^2)-1/2*(yy(3,end)^2+yy(1,end)^2)-(1-mu)/sqrt((yy(3,end)+mu)^2+(yy(1,end)))-mu/sqrt((yy(3,end)-(1-mu))^2+yy(1,end)^2);
 E_anf = 1/2*(yy(4,1)^2+yy(2,1)^2)-1/2*(yy(3,1)^2+yy(1,1)^2)-(1-mu)/sqrt((yy(3,1)+mu)^2+(yy(1,1)))-mu/sqrt((yy(3,1)-(1-mu))^2+yy(1,1)^2);
-E_diff = E_anf-E_end
+E_diff = E_end-E_anf
 
 % Ergebnisse:
 % =========================================================================
@@ -53,14 +53,14 @@ E_diff = E_anf-E_end
 % zu berechnen, was auf die Lösung von impliziten Gleichungssytemen in jedem 
 % Zeitschritt zurück zu führen ist. 
 %
-% Bei beiden Verfahren ist die Energiebilanz positiv. Die
-% Verfahrensfehler führen also zu einem Anstieg der Systemenergie über den
-% berechneten Zeitraum.
+% Bei beiden Verfahren ist die Energiebilanz über die berechnete Zeit negativ.
+% Die Enegie des Systems wird also durch die numerische Näherung (mit diesen Verf.)
+% systematisch unterschätzt.
 
 %--------------------------------------------------------------------------
 %-- Differentialgleichungssystem  aus Beispiel 6.1 aufbauen ---------------
 
-function [M, mu] = create_DES();
+function [M, mu] = create_DES()
     
     syms x(t) y(t)
     mu=0.012277471;
