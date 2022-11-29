@@ -2,74 +2,81 @@
 % Code von Alexander Glock
 clearvars
 
-% Paramter
+% Aufgaben Parameter
 t0=0;
 T=4*pi;                 % 2 Perioden = 4 pi
 y0=[1;0];               % 1 cos Lsg
-n_max=1000;             % ganzzahl größer 100
 
-% Verfahrensauswahl order: 3 oder 4 mit impl=true/false
+% Verfahrensauswahl - order: 3 oder 4 mit impl=false
+%                   - order: 2 oder 4 mit impl=true
 order = 4;
 impl= false;
 
 % AWP und Verfahren initialisieren
-[A,beta,gamma,msg]=select_RK(order,impl)
+[A,beta,gamma, n_max]=select_RK(order,impl);
 [f, S] = create_DES();
-
-% erzeuge logspace vektor mit 200 GANZEN Zahlen zwischen 100 und n_max 
-n_log=round(logspace(log10(100),log10(n_max),50));
-
+% erzeuge logspace vektor mit 4 GANZEN Zahlen zwischen 2000 und n_max 
+n_log=round(logspace(log10(2000),log10(n_max),4));
 % fehlerbestimmung + plot
 hh=0;
 error=0;
+times=0;
+
 n_end=n_log(end);
 for n=n_log(1:end)
-    if n==n_end
-        tic
-        [tt, yy]=myRK(y0,f,t0,T,n,A,beta,gamma);
-        time = toc
-    else
-        [tt, yy]=myRK(y0,f,t0,T,n,A,beta,gamma);
-    end
-    error=[error,norm(yy(:,1)-yy(:,end))];
+    tic
+    [tt, yy]=myRK(y0,f,t0,T,n,A,beta,gamma);
+    times=[times,toc];
+    error=[error,norm(yy(:,end)-y0,'inf')];
     hh=[hh,(T-t0)/n];
 end
-min_error = error(end)
+[h_min_error, ind]=min(error(2:end));
+
+min_error_time=times(ind+1)
+h_min=hh(ind+1)
+h_min_error
+
 loglog(hh(2:end),error(2:end))
 title('Fehler in Abhänigkeit zur Gitterweite')
 xlabel('Gitterweite h')
-ylabel('Verfahrensfehler nach 2 Perioden')
+ylabel('Verfahrensfehler | |_\infty nach 2 T')
 grid on
 
-
 % Ergebnis:
-% Bei allen gegebenen Verfahren wird der kleinste Fehler bei der kleinsten
-% Gitterweite h erreicht. Bei der Verwendung von n_max=1000 ergeben sich
-% diese minimale Gitterweite zu ~ 10^(-2) und die dortigen Fehler:
-%   2.6*10^(-9)   RK4 - explizit, ordnung 4             0.0153 sec
-%   0.0387        Simpson - explizit, ordnung 3         0.0117 sec
-%   4.34*10^(-10) Gauss2 - implizit, ordnung 4          0.7091 sec
-%   3.4*10^(-7)   Radau-IA - implizit, ordnung 3        0.7056 sec
+% Die Fehlerkonvergenz aller Verfahren ist nur bis zu einer entspricht nur
+% bis zu einem gewissen Punkt den erwarteten Ordnungen. Wenn die Gitterweite
+% h zu gering gewählt wird, kommt es zur Verschlechterung des Konvergenzverhaltens
+% und letztendlich sogar zu einer Erhöhung des Fehlers bei kleineren
+% Schrittweiten (!). In der folgenden Tabelle sind die experimentell
+% ermittelten, "optimalen" Schrittweiten h_min, deren korrespondierenden minimalen
+% Fehler, der Verfahrensname und die Durchlaufzeit des RK-solvers angegeben.
+%
+% h_min        | Fehler - h_min | Verfahren            | h_min Durchlaufzeit
+%===========================================================================
+% 10^(-5)      | 1.1*10^(-14)   | RK4 -expl,ord4       | 1.71 sec
+% 3.02*10^(-5) | 5.4*10^(-14)   | Simpson-expl,ord3    | 4.37 sec
+% 2.91*10^(-4) | 1.7*10^(-15)   | Gauss2 -impl,ord4    | 31.1 sec
+% 2.51*10^(-5) | 4.3*10^(-14)   | RadauIA -impl,ord3   | 370 sec
 %
 % Die Zeiten wurden immer beim Durchlauf mit der kleinsten Gitterweite
 % und ohne Änderungen am myRK-solver gemessen (TolX,TolFun=1e-14).
 % Anschließend wurden die Paramter auf Tolx, TolFun = 1e-10 geändert.
 % Dadurch konnten für die impliziten verfahren folgende Ergebnisse erreicht
 % werden:
-%   4.6*10^(-10)  Gauss2 - implizit, ordnung 4          0.6698 sec
-%   3.5*10^(-7)   Radau-IA - implizit, ordnung 3        0.6222 sec
-% Bei einer Verschärfung der Toleranzen auf Tolx, TolFun 1e-18 hingegen:
-%   4.35*10^(-10)  Gauss2 - implizit, ordnung 4         0.7641 sec
-%   3.46*10^(-7)   Radau-IA - implizit, ordnung 3       0.7262 sec
 %
-% Fsolve ist ebenfalls ein iteratives Verfahren. Dieses Verfahren liefert
+% 6.28*10^(-5) | 4.2*10^(-15)   | Gauss2 -impl,ord4    | 129 sec
+% 2.51*10^(-5) | 6.7*10^(-14)   | RadauIA -impl,ord3   | 326 sec
+%
+% Fsolve ist ein iteratives Verfahren. Dieses Verfahren liefert
 % kein absolutes Ergebnis sondern eine qualitative Näherung als Lösung für
 % die nichtlinearen Gleichungssysteme bei impliziten RKV. Dieser iterative
 % Gleichungslöser besitzt Abbruchbedingungen (Tolx, TolFun) mit denen das
-% Näherungsverfahren ab einem bestimmten Punkt als ausreichend genau
-% hingenommen wird. Bei der Verschärfung der Abbruchbedingungen steigt die
-% Qualität der fsolve approximation aber eben auch die Zahl der Iterationen
-% und damit die Dauer des RK-Verfahrens
+% Näherungsverfahren ab einem bestimmten Punkt beendet wird.
+% Bei der Lockerung der Toleranzen sind weniger fsolve Iterationen
+% notwendig womit die Rechenzeit für impizite Verfahren gesenkt wird.
+% Dadurch werden allerdings auch die Näherungsfehler beim Lösen der impl. RKV 
+% erhöht wodurch das Näherungsergebnis etwas verschlechtert wird. 
+%
 
 
 %--------------------------------------------------------------------------
@@ -88,37 +95,42 @@ end
 %--------------------------------------------------------------------------
 %-------------------------  Verfahren definieren --------------------------
 
-function [A,beta,gamma,msg]=select_RK(order,impl_true)
+function [A,beta,gamma,n_max]=select_RK(order,impl_true)
     if order==4 && impl_true
         %Gauss Two-Step - implizites Verf.
         A = [[1/4,1/4 - sqrt(3)/6];[1/4 + sqrt(3)/6,1/4]];
         beta = [1/2,1/2]';
         gamma = [1/2-sqrt(3)/6,1/2 + sqrt(3)/6]';
-        msg = "selected gaussII order 4";
+        msg = "selected gaussII order 4"
+        n_max=200000;
     
     elseif order==3 && impl_true
         %Radau-IA
-        A = [[1/4,-1/4];[1/4, 5/12]];
-        beta = [1/4,3/4]';
-        gamma = [0, 2/3]';
-        msg = "selected Radau-IA order 3";
+        A = [1/4 -1/4; 1/4 5/12];
+        beta = [1/4 3/4]';
+        gamma = [0 2/3]';
+        msg = "Radau IA order 3"
+        n_max=300000;
     
     elseif order==4 && not(impl_true)
         %klassisches RK - explizites Verf.
         A = [0 0 0 0; 1/2 0 0 0; 0 1/2 0 0; 0 0 1 0];
         beta = [1/6,1/3,1/3,1/6]';
         gamma = [0, 1/2, 1/2, 1]';
-        msg = "selected Runge-Kutta4 order 4";
+        msg = "selected Runge-Kutta4 order 4"
+        n_max=1000000;
     
     elseif order==3 && not(impl_true)
         %Simpsonregel- explizites Verf.
         A = [0 0 0 ; 1/2 0 0 ; -1 2 0];
-        beta = [1/4,0,3/4]';
+        beta = [1/6,4/6,1/6]';
         gamma = [0, 1/2, 1]';
-        msg = "selected Simpson order 3";
+        msg = "selected Simpson order 3"
+        n_max=6000000;
     else
-        error("unsupported order input (3 or 4)")
+        error("unsupported order-impl combination")
     end
+    
 end
 
 %--------------------------------------------------------------------------

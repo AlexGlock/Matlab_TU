@@ -9,12 +9,12 @@ clearvars
 [M, mu] = create_DES();
 
 % ============ ACHTUNG: ===================================================
-% Das implizite Verfahren brauch sehr lang zur Berechung der Lösung mit der
+% Das implizite Verfahren braucht sehr lang zur Berechung der Lösung mit der
 % gewünschten Genauigkeit. In den Verfahrens-Structs ist jeweils die
-% benötigte Schrittzahl zum geforderten Fahler als .n Attribut hinterlegt
+% benötigte Schrittzahl zum geforderten Fehler als .n Attribut hinterlegt
 % =========================================================================
 % RK4.n, gaussII.n oder beliebiger Ganzzahlenwert
-n=RK4.n %n=gaussII.n    %n=10000  
+n=RK4.n  %n=gaussII.n  %n=10000  
 
 % numerische Lösung mit Runge Kutta und dabei Zeit stoppen
 %  ----> entweder gaussII oder RK4 auswählen:
@@ -31,7 +31,7 @@ ylabel('Y-Koordinate')
 
 % Fehler und Schrittweite der berechneten Lösung auf Konsole ausgeben
 h=(AWP.Tper-AWP.t0)/n
-error=norm(yy(:,1)-yy(:,end))
+error=norm(AWP.Y0-yy(:,end),'inf')
 
 % Energiebilanz der Lösung errechnen: E_end-E_anf
 % yy: [y, y', x, x']
@@ -42,20 +42,20 @@ E_diff = E_end-E_anf
 % Ergebnisse:
 % =========================================================================
 % Die Lösung des DGL-Systems mit dem expliziten RK4-Verfahren benötigt
-% ungefähr eine Schrittzahl (n) von 852000 und damit eine ungefähre
-% Schrittgröße von h ~ 2*10^(-5) um die geforderte Genauigkeit zu erreichen.
+% ungefähr eine Schrittzahl (n) von 845200 und damit eine ungefähre
+% Schrittgröße von h ~ 2.02*10^(-5) um die geforderte Genauigkeit zu erreichen.
 % Die Lösung mittels des impliziten Gauss2-Verfahrens benötigt dagegen nur
 % rund 605000 Schritte um ein vergleichbares Ergebnis zu liefern. Damit
 % ergibt sich für dieses Verfahren eine konstante Schrittgröße von h ~
-% 2.8x10^-5
+% 2.82x10^(-5)
 % Das implizite Verfahren (Gauss2) benötigt trotz der geringeren
-% Schrittzahl erheblich länger (ungefähr 530 sec vs 15 sec) um die Lösung
+% Schrittzahl erheblich länger (~550 sec vs ~18 sec) um die Lösung
 % zu berechnen, was auf die Lösung von impliziten Gleichungssytemen in jedem 
 % Zeitschritt zurück zu führen ist. 
 %
-% Bei beiden Verfahren ist die Energiebilanz über die berechnete Zeit negativ.
+% Bei beiden Verfahren ist die Energiedeifferenz über den berechneten Zeitraum negativ.
 % Die Enegie des Systems wird also durch die numerische Näherung (mit diesen Verf.)
-% systematisch unterschätzt.
+% systematisch reduziert.
 
 %--------------------------------------------------------------------------
 %-- Differentialgleichungssystem  aus Beispiel 6.1 aufbauen ---------------
@@ -100,7 +100,7 @@ function [AWP, RK4, gaussII] = createSetting()
     RK4.beta = [1/6,1/3,1/3,1/6]';
     RK4.gamma = [0, 1/2, 1/2, 1]';
     RK4.Order = 4;
-    RK4.n = 852000;
+    RK4.n = 845200;
     RK4.Name = "klassisches Runge-Kutta Verfahren";
 
 end
