@@ -1,5 +1,5 @@
 %% Aufgabe H2 aus Hausübung 5
-% Code von Alexander Glock
+% Code von Alexander Glock, Luisa Emrich
 clearvars
 
 % Aufgaben Parameter
