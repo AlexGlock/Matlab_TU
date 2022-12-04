@@ -72,7 +72,7 @@ function [t,y] = myDOPRI(y0,f,t0,T,tol,facmin,facmax,fac,h)
     
      % calculate estimated error
      y_err=norm(y_od4-y_od5,"inf");
-     delta = fac*(tol/y_err)^(1/5);
+     delta = fac*(tol/y_err)^(1/p);
      if y_err<=tol
          % calculate corresponding time
          t_new= t(curStep-1)+h;
