@@ -4,15 +4,20 @@ clearvars
 
 % Ergebnis:
 % Die Schrittweitensteuerung aus der Vorlesung führt bei dem gegebenen
-% Anfangswertproblem zu einer starken Verkleinerung von h für T-> 1 und dadurch zu
-% einer rasant ansteigenden (bzw. unendlichen) Rechendauer ab T>=1. Zu sehen ist dieses Verhalten
+% Anfangswertproblem zu einer sehr starken Verkleinerung von h für T >= 1 und dadurch zu
+% einer unendlichen Rechendauer. Zu sehen ist dieses Verhalten
 % auch schon bei kleineren Lösungszeiträumen (T~0.99). Wobei die Schrittweite
 % am Ende des Lösungsintervalls bereits beginnt schnell gegen null zu
-% streben. Dadurch werden die akzeptierten Schritte des DOPRI-Solvers immer
+% streben.
+% Dieser Effekt ist auf die Beschaffenheit der DGL und ihrer Lösungsfunktion zurück zu
+% führen, da die Lösung ab T=1 unendlich anwächst. Aufgrund dieses
+% rasanten Wachstums entsteht eine große Abweichung bei der Berechnung der
+% numerischen Zeitschritte mit unterschiedlichen Ordnungen.
+% Dadurch werden die Schrittweiten des DOPRI-Solvers immer
 % kleiner bis der Zeitschritt so klein geworden ist, dass er mit der
 % Maschinengenauigkeit des Rechners nicht mehr aufgelöst werden kann und dadurch 
-% kein zeitlicher Fortschritt mit dem berechnen eines (y) Schrittes gemacht wird.
-% Dadurch fährt sich der Algorithmus fest und es entsteht eine unendliche Rechnung.
+% kein zeitlicher Fortschritt mit dem berechnen eines neuen (y)Schrittes gemacht wird.
+% Schließlich fährt sich der Algorithmus fest und es entsteht eine unendliche Rechnung.
 % Bei anderen Solvern wird dieser Fehlerfall durch eine maximale
 % Iterationszahl als Abbruchbedingung abgefangen.
 
