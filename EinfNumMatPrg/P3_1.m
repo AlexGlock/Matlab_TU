@@ -110,7 +110,7 @@ function ausgleich_stabilitaet()
     ylim([-0.01 0.08])
     title('Abweichung beim Lösen von Ax=b')
     legend('Normalengleichung','QR-Zerlegung')
-    xlabel('Potenz i')
+    xlabel('Exponent i')
     ylabel('Fehler in \infty-Norm ')
 end
 

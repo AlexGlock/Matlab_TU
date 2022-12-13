@@ -9,29 +9,31 @@ y0=[1; 0];
 t0=0;
 T=pi;
 
+%-----------------------------  MSV  --------------------------------------
+
 % Adams-Bashford 3 explizit
-%beta=[23/12 -16/12 5/12 0];
-%alpha=[0 0 -1 1];
+beta=[23/12 -16/12 5/12 0];
+alpha=[0 0 -1 1];
 
 % Adams-Bashford 2 explizit
 %beta=[-1/2 3/2 0];
 %alpha=[0 -1 1];
 
 % Adams-Moulton 2 implizit
-beta=[-1/12 8/12 5/12];
-alpha=[0 -1 1];
+%beta=[-1/12 8/12 5/12];
+%alpha=[0 -1 1];
 
 %-----------------------------  solver  -----------------------------------
+
 n=10000;
 [t,y]=myMSV(alpha,beta,y0,f,t0,T,n);
 
-
-
 % Plot der Lösung 
 plot(t,y)
-title('Lösung des AWP mit myMSV solver')
+title('Lösung des AWP durch myMSV')
 xlabel('Zeit t in Sekunden')
 ylabel('y(t)')
+
 
 %--------------------------------------------------------------------------
 %-------------------------  myMSV solver ----------------------------------
