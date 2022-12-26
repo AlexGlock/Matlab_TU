@@ -2,6 +2,9 @@
 % Code von Alexander Glock und Luisa Emrich
 clearvars
 
+% LETZTE HAUSUEBUNG -> 5CP Modul
+% Wir könnten eventuell noch den Klausur-Bonus bei 66% schaffen, also jeder
+% Punkt zählt ...
 
 % Problemdefinition
 f = @(t,y) [y(2); -pi^2*y(1)];

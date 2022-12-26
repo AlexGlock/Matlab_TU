@@ -1,15 +1,13 @@
 %% Aufgabe P1.1 - Gruppe 7 - Alexander Glock, Jannis Röder
 % Die exakte Lösung der Reihe wird symbolisch berechnet (Z.49)
-% Zu diesem Zweck wird die Matlab symbolic Toolbox in diesem Skritp
-% benutzt.
-
+% Zu diesem Zweck wird die Matlab symbolic Toolbox benutzt.
 clearvars
 
 % Parametervorgabe
 N = 2000000;
 plot_partial_sums(N)
 
-% d) Versuchserkentnisse:
+% d) Versuchserkenntnisse:
 %   Die Summationsrichtung spielt zunächst keine Rolle (kommutativ).
 %   Ab ~n=210000 konvergiert der Vorwärtssummenfehler nicht weiter.  
 %   - Die Vorwärtssumme beginnt mit der größten Zahl(=1). Inkrement wird zunehmend kleiner
