@@ -69,7 +69,7 @@ function lokalerQuadraturfehler()
     error_t = zeros(9, 1);
     error_s = error_t;
     error_od3 = error_t;
-    error_od4 = error_t;
+    error_od5 = error_t;
     bb = error_t;
     ll = (0:1:9);
     
@@ -92,15 +92,15 @@ function lokalerQuadraturfehler()
         error_t(l+1) = abs(v_t-I);
         error_s(l+1) = abs(v_s-I);
         error_od3(l+1) = b_l^3;
-        error_od4(l+1) = b_l^4;
+        error_od5(l+1) = b_l^5;
     
         bb(l+1) = b_l;
     end
     
     figure
-    loglog(bb, error_t, bb, error_s, bb, error_od3, bb, error_od4)
+    loglog(bb, error_t, bb, error_s, bb, error_od3, bb, error_od5)
     title(" lokaler Quadraturfehler ")
-    legend("trapez", "simpson", "b^3", "b^4")
+    legend("trapez", "simpson", "b^3", "b^5")
     xlabel("b")
     ylabel("absoluter Fehler")
 
@@ -138,7 +138,7 @@ function globalerQuadraturfehler()
     mm = (1:1:100);
     error_t = zeros(100, 1);
     error_s = error_t;
-    error_od3 = error_t;
+    error_od4 = error_t;
     error_od2 = error_t;
     hh = error_t;
     
@@ -161,16 +161,16 @@ function globalerQuadraturfehler()
         % Fehler
         error_t(m) = abs(v_t-I);
         error_s(m) = abs(v_s-I);
-        error_od3(m) = h_m^3;
+        error_od4(m) = h_m^4;
         error_od2(m) = h_m^2;
     
         hh(m) = h_m;
     end
     
     figure
-    loglog(hh, error_t, hh, error_s, hh, error_od2, hh, error_od3)
+    loglog(hh, error_t, hh, error_s, hh, error_od2, hh, error_od4)
     title(" globaler Quadraturfehler ")
-    legend("trapez", "simpson", "h^2", "h^3")
+    legend("trapez", "simpson", "h^2", "h^4")
     xlabel("h")
     ylabel("absoluter Fehler")
 
