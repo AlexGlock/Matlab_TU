@@ -14,4 +14,5 @@
 ## Bisherige Inhalte:
   - **EinfNumMat**  = Einführung in die numerische Mathematik WiSe22/23
   - **NumGewDGL**   = Numerik gewöhnlicher Differentialgleichungen WiSe 22/23
+  - **VADF3/FEM**   = Veranstaltung zur Finite Elemente Methode
   
